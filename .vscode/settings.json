@@ -1,0 +1,20 @@
+{
+    "cSpell.words": [
+        "automaxprocs",
+        "cleanenv",
+        "drblury",
+        "eamodio",
+        "goimports",
+        "golangci",
+        "gwruntime",
+        "ilyakaznacheev",
+        "infras",
+        "maxprocs",
+        "moby",
+        "protocolbuffers",
+        "qwenhn",
+        "tamasfe",
+        "usecases"
+    ],
+    "remote.autoForwardPortsFallback": 0
+}

@@ -1,0 +1,61 @@
+{
+	"name": "Coffee Shop",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+			"moby": false
+		}
+	},
+	"forwardPorts": [
+		// Add application ports here, for example:
+		// 8080
+	],
+	"postCreateCommand": "go version && buf --version && migrate -version && go install github.com/google/wire/cmd/wire@v0.7.0",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go",
+				"ms-azuretools.vscode-docker",
+				"tamasfe.even-better-toml",
+				"eamodio.gitlens",
+				"streetsidesoftware.code-spell-checker",
+				"bufbuild.vscode-buf",
+				"redhat.vscode-yaml",
+				"humao.rest-client"
+			],
+			"settings": {
+				"go.toolsManagement.autoUpdate": false,
+				"go.formatTool": "goimports",
+				"go.lintTool": "golangci-lint",
+				"go.lintOnSave": "package",
+				"go.testFlags": [
+					"-v"
+				],
+				"go.testTimeout": "30s",
+				"editor.formatOnSave": true,
+				"[go]": {
+					"editor.defaultFormatter": "golang.go",
+					"editor.codeActionsOnSave": {
+						"source.organizeImports": "explicit"
+					}
+				},
+				"[go.mod]": {
+					"editor.formatOnSave": true
+				},
+				"gopls": {
+					"buildFlags": [
+						"-tags=wireinject"
+					]
+				},
+				"files.associations": {
+					"buf.yaml": "yaml",
+					"buf.gen.yaml": "yaml",
+					"buf.lock": "yaml"
+				}
+			}
+		}
+	},
+	"remoteUser": "vscode"
+}

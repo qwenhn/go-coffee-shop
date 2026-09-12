@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dev Container
+.devcontainer
+
+# IDE
+.vscode
+.idea
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Go build artifacts
+bin
+build
+dist
+tmp
+*.exe
+*.test
+*.out
+coverage.out
+coverage.html
+
+# Dependencies
+# vendor
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+docs
+
+# Local / temporary files
+*.swp
+*.swo
+*~
+*.tmp
+*.bak
+
+# Docker files not needed inside build context
+Dockerfile*
+docker-compose*.yml
+compose*.yml

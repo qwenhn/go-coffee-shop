@@ -1,0 +1,98 @@
+# =========================
+# Go
+# =========================
+
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test / coverage
+*.test
+*.out
+coverage.out
+coverage.html
+
+# Build artifacts
+/bin/
+/build/
+/dist/
+/tmp/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Dependencies
+# Uncomment if vendor is NOT committed
+# /vendor/
+
+
+# =========================
+# Environment / Secrets
+# =========================
+
+.env
+.env.*
+!.env.example
+
+
+# =========================
+# Logs
+# =========================
+
+*.log
+
+
+# =========================
+# IDE / Editor
+# =========================
+
+.idea/
+*.iml
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+*.swp
+*.swo
+*~
+
+
+# =========================
+# OS
+# =========================
+
+.DS_Store
+Thumbs.db
+
+
+# =========================
+# Dev Container
+# =========================
+
+# Do NOT ignore .devcontainer/
+# It should normally be committed.
+
+# Ignore local overrides if you create them
+.devcontainer/.env
+.devcontainer/.env.*
+!.devcontainer/.env.example
+
+
+# =========================
+# Docker
+# =========================
+
+docker-compose.override.yml
+
+
+# =========================
+# Temporary files
+# =========================
+
+*.bak
+*.tmp

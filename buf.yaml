@@ -1,0 +1,17 @@
+version: v2
+
+deps:
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
+
+modules:
+  - path: proto
+    name: buf.build/qwenhn/go-coffee-shop
+
+lint:
+  use:
+    - STANDARD
+  
+breaking:
+  use:
+    - FILE

@@ -1,0 +1,37 @@
+package config
+
+import (
+	"fmt"
+
+	"github.com/ilyakaznacheev/cleanenv"
+
+	configs "github.com/qwenhn/go-coffee-shop/pkg/config"
+)
+
+type Config struct {
+	configs.App  `yaml:"app"`
+	configs.HTTP `yaml:"http"`
+	GRPC         `yaml:"grpc"`
+	configs.Log  `yaml:"logger"`
+}
+
+type GRPC struct {
+	ProductHost string `env-required:"true" yaml:"product_host" env:"GRPC_PRODUCT_HOST"`
+	ProductPort int    `env-required:"true" yaml:"product_port" env:"GRPC_PRODUCT_PORT"`
+}
+
+func NewConfig() (*Config, error) {
+	cfg := new(Config)
+
+	err := cleanenv.ReadConfig("config.yml", cfg)
+	if err != nil {
+		return nil, fmt.Errorf("config err: %w", err)
+	}
+
+	err = cleanenv.ReadEnv(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
