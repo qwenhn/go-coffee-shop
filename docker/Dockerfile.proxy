@@ -1,0 +1,37 @@
+FROM golang:1.26-alpine AS modules
+
+WORKDIR /modules
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+COPY --from=modules /go/pkg/mod /go/pkg/mod
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -trimpath -tags migrate -o /bin/app ./cmd/proxy
+
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup
+
+
+FROM scratch
+
+WORKDIR /
+
+EXPOSE 5000
+
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
+
+COPY --from=builder /bin/app /app
+COPY --from=builder /app/cmd/proxy/config.yml /config.yml
+
+USER appuser
+
+ENTRYPOINT ["/app"]

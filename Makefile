@@ -1,6 +1,10 @@
 -include .env
 export
 
+# ============================================================
+# Tools
+# ============================================================
+
 GO ?= go
 BUF ?= buf
 DOCKER ?= docker
@@ -8,7 +12,13 @@ MIGRATE ?= migrate
 SQLC ?= sqlc
 WIRE ?= wire
 GOLANGCI_LINT ?= golangci-lint
+
 GOFLAGS ?=
+GO_ENV ?= CGO_ENABLED=0
+
+# ============================================================
+# Directories
+# ============================================================
 
 PRODUCT_DIR := cmd/product
 COUNTER_DIR := cmd/counter
@@ -17,29 +27,41 @@ KITCHEN_DIR := cmd/kitchen
 PROXY_DIR := cmd/proxy
 WEB_DIR := cmd/web
 
+# Services containing Go modules.
 SERVICES := product counter barista kitchen proxy
+
+SERVICE_DIR_product := $(PRODUCT_DIR)
+SERVICE_DIR_counter := $(COUNTER_DIR)
+SERVICE_DIR_barista := $(BARISTA_DIR)
+SERVICE_DIR_kitchen := $(KITCHEN_DIR)
+SERVICE_DIR_proxy := $(PROXY_DIR)
 
 MIGRATION_DIR := db/migrations
 
-CONN_STRING := postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
+# ============================================================
+# Database
+# ============================================================
 
+CONN_STRING := postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)?sslmode=$(POSTGRES_SSLMODE)
 
 # ============================================================
 # Phony Targets
 # ============================================================
 
-.PHONY: help \
+.PHONY: \
+	help \
 	proto-deps proto-format proto-lint proto-generate proto proto-breaking \
 	run run-product run-counter run-barista run-kitchen run-proxy run-web \
 	build build-product build-counter build-barista build-kitchen build-proxy \
-	test test-race fmt vet tidy check \
+	test test-race \
+	fmt fmt-check vet tidy check \
 	wire sqlc \
 	lint linter-golangci \
-	docker-up docker-down \
+	docker-compose docker-up docker-down \
 	docker-compose-core docker-compose-core-start docker-compose-core-stop \
 	migrate-create migrate-up migrate-down migrate-down-n \
 	migrate-force migrate-goto migrate-drop \
-	clean
+	check-env clean
 
 
 # ============================================================
@@ -64,6 +86,7 @@ help:
 	@echo "  make run-barista                 Run the barista service"
 	@echo "  make run-kitchen                 Run the kitchen service"
 	@echo "  make run-proxy                   Run the proxy service"
+	@echo "  make run-web                     Run the web service"
 	@echo ""
 	@echo "Build & Test:"
 	@echo "  make build                       Build all services"
@@ -73,11 +96,12 @@ help:
 	@echo "  make build-kitchen               Build the kitchen service"
 	@echo "  make build-proxy                 Build the proxy service"
 	@echo "  make test                        Run all tests"
-	@echo "  make test-race                   Run tests with the race detector"
+	@echo "  make test-race                   Run tests with race detector"
 	@echo "  make fmt                         Format Go code"
+	@echo "  make fmt-check                   Check formatting without modifying files"
 	@echo "  make vet                         Run go vet"
 	@echo "  make tidy                        Tidy all Go modules"
-	@echo "  make check                       Run formatting, vet, lint, and tests"
+	@echo "  make check                       Run CI checks"
 	@echo ""
 	@echo "Code Generation:"
 	@echo "  make wire                        Generate dependency injection code"
@@ -85,9 +109,9 @@ help:
 	@echo ""
 	@echo "Linting:"
 	@echo "  make lint                        Run golangci-lint"
-	@echo "  make linter-golangci             Run golangci-lint directly"
 	@echo ""
 	@echo "Docker:"
+	@echo "  make docker-compose              Restart full development environment"
 	@echo "  make docker-up                   Start full development environment"
 	@echo "  make docker-down                 Stop full development environment"
 	@echo "  make docker-compose-core         Restart core infrastructure"
@@ -133,67 +157,58 @@ proto-breaking:
 # Application
 # ============================================================
 
-# Run all services concurrently.
 run:
 	@echo "Starting all services..."
-	$(MAKE) run-product & \
-	$(MAKE) run-counter & \
-	$(MAKE) run-barista & \
-	$(MAKE) run-kitchen & \
-	$(MAKE) run-proxy & \
-	$(MAKE) run-web & \
+	@set -e; \
+	pids=""; \
+	trap 'kill $$pids 2>/dev/null || true' INT TERM EXIT; \
+	$(MAKE) run-product & pids="$$pids $$!"; \
+	$(MAKE) run-counter & pids="$$pids $$!"; \
+	$(MAKE) run-barista & pids="$$pids $$!"; \
+	$(MAKE) run-kitchen & pids="$$pids $$!"; \
+	$(MAKE) run-proxy & pids="$$pids $$!"; \
+	$(MAKE) run-web & pids="$$pids $$!"; \
 	wait
 
 run-product:
-	cd $(PRODUCT_DIR) && \
-	CGO_ENABLED=0 $(GO) run ./...
+	cd $(PRODUCT_DIR) && $(GO_ENV) $(GO) run ./...
 
 run-counter:
-	cd $(COUNTER_DIR) && \
-	CGO_ENABLED=0 $(GO) run ./...
+	cd $(COUNTER_DIR) && $(GO_ENV) $(GO) run ./...
 
 run-barista:
-	cd $(BARISTA_DIR) && \
-	CGO_ENABLED=0 $(GO) run ./...
+	cd $(BARISTA_DIR) && $(GO_ENV) $(GO) run ./...
 
 run-kitchen:
-	cd $(KITCHEN_DIR) && \
-	CGO_ENABLED=0 $(GO) run ./...
+	cd $(KITCHEN_DIR) && $(GO_ENV) $(GO) run ./...
 
 run-proxy:
-	cd $(PROXY_DIR) && \
-	CGO_ENABLED=0 $(GO) run ./...
+	cd $(PROXY_DIR) && $(GO_ENV) $(GO) run ./...
 
 run-web:
-	cd $(WEB_DIR) && \
-	CGO_ENABLED=0 $(GO) run ./...
+	cd $(WEB_DIR) && $(GO_ENV) $(GO) run ./...
 
 
 # ============================================================
 # Build
 # ============================================================
 
-build: build-product build-counter build-barista build-kitchen build-proxy
+build: $(addprefix build-,$(SERVICES))
 
 build-product:
-	cd $(PRODUCT_DIR) && \
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/product ./...
+	cd $(PRODUCT_DIR) && $(GO_ENV) $(GO) build $(GOFLAGS) -o bin/product ./...
 
 build-counter:
-	cd $(COUNTER_DIR) && \
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/counter ./...
+	cd $(COUNTER_DIR) && $(GO_ENV) $(GO) build $(GOFLAGS) -o bin/counter ./...
 
 build-barista:
-	cd $(BARISTA_DIR) && \
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/barista ./...
+	cd $(BARISTA_DIR) && $(GO_ENV) $(GO) build $(GOFLAGS) -o bin/barista ./...
 
 build-kitchen:
-	cd $(KITCHEN_DIR) && \
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/kitchen ./...
+	cd $(KITCHEN_DIR) && $(GO_ENV) $(GO) build $(GOFLAGS) -o bin/kitchen ./...
 
 build-proxy:
-	cd $(PROXY_DIR) && \
-	CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/proxy ./...
+	cd $(PROXY_DIR) && $(GO_ENV) $(GO) build $(GOFLAGS) -o bin/proxy ./...
 
 
 # ============================================================
@@ -201,18 +216,20 @@ build-proxy:
 # ============================================================
 
 test:
-	cd $(PRODUCT_DIR) && $(GO) test ./...
-	cd $(COUNTER_DIR) && $(GO) test ./...
-	cd $(BARISTA_DIR) && $(GO) test ./...
-	cd $(KITCHEN_DIR) && $(GO) test ./...
-	cd $(PROXY_DIR) && $(GO) test ./...
+	@set -e; \
+	for service in $(SERVICES); do \
+		echo "==> Testing $$service"; \
+		cd $$(eval echo \$$(SERVICE_DIR_$$service)) && $(GO) test ./...; \
+		cd - >/dev/null; \
+	done
 
 test-race:
-	cd $(PRODUCT_DIR) && $(GO) test -race ./...
-	cd $(COUNTER_DIR) && $(GO) test -race ./...
-	cd $(BARISTA_DIR) && $(GO) test -race ./...
-	cd $(KITCHEN_DIR) && $(GO) test -race ./...
-	cd $(PROXY_DIR) && $(GO) test -race ./...
+	@set -e; \
+	for service in $(SERVICES); do \
+		echo "==> Race testing $$service"; \
+		cd $$(eval echo \$$(SERVICE_DIR_$$service)) && $(GO) test -race ./...; \
+		cd - >/dev/null; \
+	done
 
 
 # ============================================================
@@ -220,27 +237,42 @@ test-race:
 # ============================================================
 
 fmt:
-	cd $(PRODUCT_DIR) && $(GO) fmt ./...
-	cd $(COUNTER_DIR) && $(GO) fmt ./...
-	cd $(BARISTA_DIR) && $(GO) fmt ./...
-	cd $(KITCHEN_DIR) && $(GO) fmt ./...
-	cd $(PROXY_DIR) && $(GO) fmt ./...
+	@set -e; \
+	for service in $(SERVICES); do \
+		echo "==> Formatting $$service"; \
+		cd $$(eval echo \$$(SERVICE_DIR_$$service)) && $(GO) fmt ./...; \
+		cd - >/dev/null; \
+	done
+
+fmt-check:
+	@set -e; \
+	files="$$(find . -type f -name '*.go' \
+		-not -path './vendor/*' \
+		-not -path './.git/*')"; \
+	unformatted="$$(gofmt -l $$files)"; \
+	if [ -n "$$unformatted" ]; then \
+		echo "The following files are not formatted:"; \
+		echo "$$unformatted"; \
+		exit 1; \
+	fi
 
 vet:
-	cd $(PRODUCT_DIR) && $(GO) vet ./...
-	cd $(COUNTER_DIR) && $(GO) vet ./...
-	cd $(BARISTA_DIR) && $(GO) vet ./...
-	cd $(KITCHEN_DIR) && $(GO) vet ./...
-	cd $(PROXY_DIR) && $(GO) vet ./...
+	@set -e; \
+	for service in $(SERVICES); do \
+		echo "==> Vetting $$service"; \
+		cd $$(eval echo \$$(SERVICE_DIR_$$service)) && $(GO) vet ./...; \
+		cd - >/dev/null; \
+	done
 
 tidy:
-	cd $(PRODUCT_DIR) && $(GO) mod tidy
-	cd $(COUNTER_DIR) && $(GO) mod tidy
-	cd $(BARISTA_DIR) && $(GO) mod tidy
-	cd $(KITCHEN_DIR) && $(GO) mod tidy
-	cd $(PROXY_DIR) && $(GO) mod tidy
+	@set -e; \
+	for service in $(SERVICES); do \
+		echo "==> Tidying $$service"; \
+		cd $$(eval echo \$$(SERVICE_DIR_$$service)) && $(GO) mod tidy; \
+		cd - >/dev/null; \
+	done
 
-check: fmt vet lint test
+check: fmt-check vet lint test
 
 
 # ============================================================
@@ -261,21 +293,23 @@ sqlc:
 # Linting
 # ============================================================
 
-lint: linter-golangci
-
-linter-golangci:
+lint:
 	$(GOLANGCI_LINT) run
+
+linter-golangci: lint
 
 
 # ============================================================
 # Docker Compose
 # ============================================================
 
+docker-compose: docker-down docker-up
+
 docker-up:
 	$(DOCKER) compose up --build
 
 docker-down:
-	$(DOCKER) compose down
+	$(DOCKER) compose down --remove-orphans -v
 
 docker-compose-core: docker-compose-core-stop docker-compose-core-start
 
@@ -290,44 +324,53 @@ docker-compose-core-stop:
 # Database Migrations
 # ============================================================
 
+check-env:
+	@test -n "$(POSTGRES_USER)" || (echo "ERROR: POSTGRES_USER is required"; exit 1)
+	@test -n "$(POSTGRES_PASSWORD)" || (echo "ERROR: POSTGRES_PASSWORD is required"; exit 1)
+	@test -n "$(POSTGRES_HOST)" || (echo "ERROR: POSTGRES_HOST is required"; exit 1)
+	@test -n "$(POSTGRES_PORT)" || (echo "ERROR: POSTGRES_PORT is required"; exit 1)
+	@test -n "$(POSTGRES_DB)" || (echo "ERROR: POSTGRES_DB is required"; exit 1)
+	@test -n "$(POSTGRES_SSLMODE)" || (echo "ERROR: POSTGRES_SSLMODE is required"; exit 1)
+
 migrate-create:
 	@test -n "$(NAME)" || (echo "ERROR: NAME is required. Example: make migrate-create NAME=add_users"; exit 1)
-	$(MIGRATE) create -ext sql -dir $(MIGRATION_DIR) -seq $(NAME)
+	$(MIGRATE) create -ext sql -dir $(MIGRATION_DIR) -seq "$(NAME)"
 
-migrate-up:
+migrate-up: check-env
 	$(MIGRATE) \
 		-path $(MIGRATION_DIR) \
 		-database "$(CONN_STRING)" \
 		up
 
-migrate-down:
+migrate-down: check-env
 	$(MIGRATE) \
 		-path $(MIGRATION_DIR) \
 		-database "$(CONN_STRING)" \
 		down 1
 
-migrate-down-n:
+migrate-down-n: check-env
 	@test -n "$(N)" || (echo "ERROR: N is required. Example: make migrate-down-n N=2"; exit 1)
+	@test "$(N)" -gt 0 || (echo "ERROR: N must be greater than 0"; exit 1)
 	$(MIGRATE) \
 		-path $(MIGRATION_DIR) \
 		-database "$(CONN_STRING)" \
-		down $(N)
+		down "$(N)"
 
-migrate-force:
+migrate-force: check-env
 	@test -n "$(VERSION)" || (echo "ERROR: VERSION is required. Example: make migrate-force VERSION=1"; exit 1)
 	$(MIGRATE) \
 		-path $(MIGRATION_DIR) \
 		-database "$(CONN_STRING)" \
-		force $(VERSION)
+		force "$(VERSION)"
 
-migrate-goto:
+migrate-goto: check-env
 	@test -n "$(VERSION)" || (echo "ERROR: VERSION is required. Example: make migrate-goto VERSION=3"; exit 1)
 	$(MIGRATE) \
 		-path $(MIGRATION_DIR) \
 		-database "$(CONN_STRING)" \
-		goto $(VERSION)
+		goto "$(VERSION)"
 
-migrate-drop:
+migrate-drop: check-env
 	$(MIGRATE) \
 		-path $(MIGRATION_DIR) \
 		-database "$(CONN_STRING)" \
@@ -340,6 +383,7 @@ migrate-drop:
 
 clean:
 	rm -rf gen
+	rm -rf $(addsuffix /bin,$(addprefix $(PRODUCT_DIR) ,))
 	rm -rf $(PRODUCT_DIR)/bin
 	rm -rf $(COUNTER_DIR)/bin
 	rm -rf $(BARISTA_DIR)/bin
