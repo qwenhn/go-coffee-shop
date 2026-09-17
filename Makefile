@@ -15,6 +15,7 @@ COUNTER_DIR := cmd/counter
 BARISTA_DIR := cmd/barista
 KITCHEN_DIR := cmd/kitchen
 PROXY_DIR := cmd/proxy
+WEB_DIR := cmd/web
 
 SERVICES := product counter barista kitchen proxy
 
@@ -29,7 +30,7 @@ CONN_STRING := postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOS
 
 .PHONY: help \
 	proto-deps proto-format proto-lint proto-generate proto proto-breaking \
-	run run-product run-counter run-barista run-kitchen run-proxy \
+	run run-product run-counter run-barista run-kitchen run-proxy run-web \
 	build build-product build-counter build-barista build-kitchen build-proxy \
 	test test-race fmt vet tidy check \
 	wire sqlc \
@@ -140,6 +141,7 @@ run:
 	$(MAKE) run-barista & \
 	$(MAKE) run-kitchen & \
 	$(MAKE) run-proxy & \
+	$(MAKE) run-web & \
 	wait
 
 run-product:
@@ -160,6 +162,10 @@ run-kitchen:
 
 run-proxy:
 	cd $(PROXY_DIR) && \
+	CGO_ENABLED=0 $(GO) run ./...
+
+run-web:
+	cd $(WEB_DIR) && \
 	CGO_ENABLED=0 $(GO) run ./...
 
 

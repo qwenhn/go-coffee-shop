@@ -3,10 +3,12 @@ module github.com/qwenhn/go-coffee-shop
 go 1.26.8
 
 require (
+	github.com/golang/glog v1.2.5
 	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/labstack/echo/v5 v5.3.1
 	github.com/lib/pq v1.12.3
 	github.com/pkg/errors v0.9.1
 	github.com/rabbitmq/amqp091-go v1.15.0
