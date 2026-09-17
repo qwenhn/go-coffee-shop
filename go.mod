@@ -3,10 +3,14 @@ module github.com/qwenhn/go-coffee-shop
 go 1.26.8
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/google/wire v0.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/lib/pq v1.12.3
 	github.com/pkg/errors v0.9.1
+	github.com/rabbitmq/amqp091-go v1.15.0
+	github.com/samber/lo v1.53.0
 	go.uber.org/automaxprocs v1.6.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260908043556-f8649ddbbfe6
 	google.golang.org/grpc v1.83.2

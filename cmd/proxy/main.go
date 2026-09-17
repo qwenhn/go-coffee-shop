@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/qwenhn/go-coffee-shop/cmd/proxy/config"
+	counterv1 "github.com/qwenhn/go-coffee-shop/gen/go/counter/v1"
 	productv1 "github.com/qwenhn/go-coffee-shop/gen/go/product/v1"
 	"github.com/qwenhn/go-coffee-shop/pkg/logger"
 )
@@ -72,11 +73,17 @@ func newGateway(
 	opts []gwruntime.ServeMuxOption,
 ) (http.Handler, error) {
 	productEndpoint := fmt.Sprintf("%s:%d", cfg.ProductHost, cfg.ProductPort)
+	counterEndpoint := fmt.Sprintf("%s:%d", cfg.CounterHost, cfg.CounterPort)
 
 	mux := gwruntime.NewServeMux(opts...)
 	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	err := productv1.RegisterProductServiceHandlerFromEndpoint(ctx, mux, productEndpoint, dialOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = counterv1.RegisterCounterServiceHandlerFromEndpoint(ctx, mux, counterEndpoint, dialOpts)
 	if err != nil {
 		return nil, err
 	}

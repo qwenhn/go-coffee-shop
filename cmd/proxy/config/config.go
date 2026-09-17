@@ -18,6 +18,8 @@ type Config struct {
 type GRPC struct {
 	ProductHost string `env-required:"true" yaml:"product_host" env:"GRPC_PRODUCT_HOST"`
 	ProductPort int    `env-required:"true" yaml:"product_port" env:"GRPC_PRODUCT_PORT"`
+	CounterHost string `env-required:"true" yaml:"counter_host" env:"GRPC_COUNTER_HOST"`
+	CounterPort int    `env-required:"true" yaml:"counter_port" env:"GRPC_COUNTER_PORT"`
 }
 
 func NewConfig() (*Config, error) {

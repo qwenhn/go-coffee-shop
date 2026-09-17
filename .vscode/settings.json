@@ -1,9 +1,12 @@
 {
     "cSpell.words": [
+        "amqp",
         "automaxprocs",
         "cleanenv",
+        "counterv",
         "drblury",
         "eamodio",
+        "eventhandlers",
         "goimports",
         "golangci",
         "gwruntime",
@@ -11,8 +14,10 @@
         "infras",
         "maxprocs",
         "moby",
+        "productv",
         "protocolbuffers",
         "qwenhn",
+        "sharedkernel",
         "tamasfe",
         "usecases"
     ],

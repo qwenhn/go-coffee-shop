@@ -3,6 +3,10 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
+	"initializeCommand": "docker network inspect coffee-shop-network >/dev/null 2>&1 || docker network create coffee-shop-network",
+	"runArgs": [
+		"--network=coffee-shop-network"
+	],
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"moby": false
@@ -12,7 +16,7 @@
 		// Add application ports here, for example:
 		// 8080
 	],
-	"postCreateCommand": "go version && buf --version && migrate -version && go install github.com/google/wire/cmd/wire@v0.7.0",
+	"postCreateCommand": "go version && buf --version && migrate -version && go install github.com/google/wire/cmd/wire@v0.7.0 && go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1",
 	"customizations": {
 		"vscode": {
 			"extensions": [
