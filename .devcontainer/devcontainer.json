@@ -3,19 +3,28 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
-	"initializeCommand": "docker network inspect coffee-shop-network >/dev/null 2>&1 || docker network create coffee-shop-network",
 	"runArgs": [
-		"--network=coffee-shop-network"
+		"--privileged",
+		"--cgroupns=host",
+		"--env-file",
+		".devcontainer/.env"
 	],
 	"features": {
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
 			"moby": false
-		}
+		},
+		"ghcr.io/devcontainers/features/node:2": {},
+		"ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
 	},
 	"forwardPorts": [
-		// Add application ports here, for example:
-		// 8080
+		4646,
+		8500,
+		8200,
+		8888,
+		15672,
+		5555
 	],
+	"postStartCommand": "until docker info >/dev/null 2>&1; do sleep 1; done; docker network inspect coffee-shop-network >/dev/null 2>&1 || docker network create coffee-shop-network",
 	"postCreateCommand": "go version && buf --version && migrate -version && go install github.com/google/wire/cmd/wire@v0.7.0 && go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1",
 	"customizations": {
 		"vscode": {
@@ -27,7 +36,10 @@
 				"streetsidesoftware.code-spell-checker",
 				"bufbuild.vscode-buf",
 				"redhat.vscode-yaml",
-				"humao.rest-client"
+				"humao.rest-client",
+				"hashicorp.hcl",
+				"hashicorp.terraform",
+				"anthropic.claude-code"
 			],
 			"settings": {
 				"go.toolsManagement.autoUpdate": false,
@@ -52,6 +64,12 @@
 					"buildFlags": [
 						"-tags=wireinject"
 					]
+				},
+				"[hcl]": {
+					"editor.defaultFormatter": "hashicorp.hcl"
+				},
+				"[terraform]": {
+					"editor.defaultFormatter": "hashicorp.terraform"
 				},
 				"files.associations": {
 					"buf.yaml": "yaml",

@@ -7,9 +7,9 @@ http:
   port: 5000
 
 grpc:
-  product_host: "0.0.0.0"
+  product_host: "product"
   product_port: 5001
-  counter_host: "0.0.0.0"
+  counter_host: "counter"
   counter_port: 5002
 
 logger:

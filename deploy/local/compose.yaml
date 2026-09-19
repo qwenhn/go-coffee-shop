@@ -1,0 +1,150 @@
+name: go-coffee-shop
+
+services:
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: coffee-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-coffee}
+      POSTGRES_USER: ${POSTGRES_USER:-coffee}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffee-local}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres-data:/var/lib/postgresql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - coffee
+
+  rabbitmq:
+    image: rabbitmq:${RABBITMQ_VERSION}
+    container_name: coffee-rabbitmq
+    restart: unless-stopped
+
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-coffee}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-coffee-local}
+
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "rabbitmq-diagnostics",
+          "-q",
+          "ping"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - coffee
+
+  consul:
+    build:
+      context: ../consul
+      args:
+        CONSUL_VERSION: ${CONSUL_VERSION}
+
+    image: coffee-shop/consul:${CONSUL_VERSION}
+
+    container_name: coffee-consul
+    restart: unless-stopped
+
+    command:
+      - agent
+      - -server
+      - -bootstrap-expect=1
+      - -ui
+      - -client=0.0.0.0
+      - -grpc-port=8502
+      - -data-dir=/consul/data
+      - -config-dir=/consul/config
+
+    ports:
+      - "8500:8500"
+      - "8502:8502"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+
+    volumes:
+      - consul-data:/consul/data
+
+    networks:
+      - coffee
+
+  vault:
+    build:
+      context: ../vault
+      args:
+        VAULT_VERSION: ${VAULT_VERSION}
+
+    image: coffee-shop/vault:${VAULT_VERSION}
+
+    container_name: coffee-vault
+    restart: unless-stopped
+
+    entrypoint:
+      - vault
+
+    command:
+      - server
+      - -config=/vault/config/vault.hcl
+
+    cap_add:
+      - IPC_LOCK
+
+    ports:
+      - "8200:8200"
+
+    volumes:
+      - vault-data:/vault/file
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "vault",
+          "status",
+          "-address=http://127.0.0.1:8200"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    networks:
+      - coffee
+
+networks:
+  coffee:
+    external: true
+    name: coffee-shop-network
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  consul-data:
+  vault-data:
+

@@ -7,6 +7,23 @@ FROM mcr.microsoft.com/devcontainers/go:2-1.26-trixie
 ARG BUF_VERSION=1.72.0
 ARG MIGRATE_VERSION=4.20.1
 
+ARG TERRAFORM_VERSION=1.16.3
+ARG NOMAD_VERSION=2.0.6
+ARG CONSUL_VERSION=2.0.4
+ARG VAULT_VERSION=2.1.1
+ARG CNI_VERSION=1.6.2
+
+ARG TARGETOS
+ARG TARGETARCH
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    iptables \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
 # ---------------------------------------------------------------------------
 # Install Buf
 # ---------------------------------------------------------------------------
@@ -22,15 +39,74 @@ RUN set -eux; \
 # Install golang-migrate
 # ---------------------------------------------------------------------------
 
-ARG TARGETOS
-ARG TARGETARCH
-
 RUN set -eux; \
     curl -fsSL \
     "https://github.com/golang-migrate/migrate/releases/download/v${MIGRATE_VERSION}/migrate.${TARGETOS}-${TARGETARCH}.tar.gz" \
     | tar -xz -C /usr/local/bin migrate; \
     chmod +x /usr/local/bin/migrate; \
     migrate -version
+
+# ---------------------------------------------------------------------------
+# Install Terraform
+# ---------------------------------------------------------------------------
+
+RUN set -eux; \
+    curl -fsSL \
+    "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${TARGETOS}_${TARGETARCH}.zip" \
+    -o /tmp/terraform.zip; \
+    unzip -q -o /tmp/terraform.zip terraform; \
+    install -m 0755 terraform /usr/local/bin/terraform; \
+    rm -f terraform /tmp/terraform.zip; \
+    terraform version
+
+# ---------------------------------------------------------------------------
+# Install Nomad
+# ---------------------------------------------------------------------------
+
+RUN set -eux; \
+    curl -fsSL \
+    "https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/nomad_${NOMAD_VERSION}_${TARGETOS}_${TARGETARCH}.zip" \
+    -o /tmp/nomad.zip; \
+    unzip -q /tmp/nomad.zip nomad; \
+    install -m 0755 nomad /usr/local/bin/nomad; \
+    rm -f nomad /tmp/nomad.zip; \
+    nomad version
+
+# ---------------------------------------------------------------------------
+# Install Consul
+# ---------------------------------------------------------------------------
+
+RUN set -eux; \
+    curl -fsSL \
+    "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_${TARGETOS}_${TARGETARCH}.zip" \
+    -o /tmp/consul.zip; \
+    unzip -q /tmp/consul.zip consul; \
+    install -m 0755 consul /usr/local/bin/consul; \
+    rm -f consul /tmp/consul.zip; \
+    consul version
+
+# ---------------------------------------------------------------------------
+# Install Vault
+# ---------------------------------------------------------------------------
+
+RUN set -eux; \
+    curl -fsSL \
+    "https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_${TARGETOS}_${TARGETARCH}.zip" \
+    -o /tmp/vault.zip; \
+    unzip -q /tmp/vault.zip vault; \
+    install -m 0755 vault /usr/local/bin/vault; \
+    rm -f vault /tmp/vault.zip; \
+    vault version
+
+# ---------------------------------------------------------------------------
+# Install CNI plugins for Nomad bridge networking
+# ---------------------------------------------------------------------------
+
+RUN set -eux; \
+    mkdir -p /opt/cni/bin; \
+    curl -fsSL \
+    "https://github.com/containernetworking/plugins/releases/download/v${CNI_VERSION}/cni-plugins-linux-amd64-v${CNI_VERSION}.tgz" \
+    | tar -xz -C /opt/cni/bin
 
 # ---------------------------------------------------------------------------
 # Verify Go installation

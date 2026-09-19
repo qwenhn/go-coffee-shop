@@ -12,10 +12,10 @@ logger:
 
 postgres:
   pool_max: 2
-  dsn_url: host=postgres user=postgres password=P@ssw0rd dbname=postgres sslmode=disable
+  dsn_url: ""
 
 rabbitmq:
-  url: amqp://guest:guest@rabbitmq:5672/
+  url: ""
 
 product_client:
-  url: 0.0.0.0:5001
+  url: ""
