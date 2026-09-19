@@ -15,6 +15,24 @@ This project is **not an exact copy** of the original. It includes some updates,
 - **golang-migrate** — Database migrations
 - **Buf** — Protobuf management and code generation
 
+## Run with Nomad
+
+### Requirements
+
+- Docker
+- Docker Compose
+- Nomad
+- Consul
+- Vault
+- jq
+- curl
+
+### Start
+
+```bash
+make dev-nomad
+```
+
 ## Note
 
 This project is mainly created for learning, experimentation, and building a reusable reference architecture for future Go projects.

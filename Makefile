@@ -390,3 +390,19 @@ clean:
 	rm -rf $(KITCHEN_DIR)/bin
 	rm -rf $(PROXY_DIR)/bin
 	$(GO) clean
+
+.PHONY: dev-nomad
+dev-nomad:
+	bash ./scripts/dev/up.sh
+
+.PHONY: dev-nomad-down
+dev-nomad-down:
+	bash ./scripts/dev/down.sh
+
+.PHONY: dev-nomad-reset
+dev-nomad-reset:
+	bash ./scripts/dev/reset.sh
+
+.PHONY: dev-nomad-verify
+dev-nomad-verify:
+	bash ./scripts/dev/verify.sh

@@ -7,6 +7,11 @@
 	"runArgs": [
 		"--network=coffee-shop-network"
 	],
+	"containerEnv": {
+		"CONSUL_HTTP_ADDR": "http://coffee-consul:8500",
+		"VAULT_ADDR": "http://coffee-vault:8200",
+		"NOMAD_ADDR": "http://127.0.0.1:4646"
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
 			"moby": false
@@ -27,7 +32,9 @@
 				"streetsidesoftware.code-spell-checker",
 				"bufbuild.vscode-buf",
 				"redhat.vscode-yaml",
-				"humao.rest-client"
+				"humao.rest-client",
+				"hashicorp.hcl",
+				"hashicorp.terraform"
 			],
 			"settings": {
 				"go.toolsManagement.autoUpdate": false,
@@ -52,6 +59,12 @@
 					"buildFlags": [
 						"-tags=wireinject"
 					]
+				},
+				"[hcl]": {
+					"editor.defaultFormatter": "hashicorp.hcl"
+				},
+				"[terraform]": {
+					"editor.defaultFormatter": "hashicorp.terraform"
 				},
 				"files.associations": {
 					"buf.yaml": "yaml",
