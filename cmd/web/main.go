@@ -8,6 +8,8 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 
 	"github.com/golang/glog"
@@ -20,7 +22,6 @@ var embededFiles embed.FS
 func getFileSystem(useOS bool) http.FileSystem {
 	if useOS {
 		log.Print("using live mode")
-
 		return http.FS(os.DirFS("app"))
 	}
 
@@ -34,10 +35,6 @@ func getFileSystem(useOS bool) http.FileSystem {
 	return http.FS(fsys)
 }
 
-type UrlModel struct {
-	Url string `json:"url"`
-}
-
 func main() {
 	reverseProxyURL, ok := os.LookupEnv("REVERSE_PROXY_URL")
 	if !ok || reverseProxyURL == "" {
@@ -49,21 +46,26 @@ func main() {
 		glog.Fatalf("web: environment variable not declared: webPort")
 	}
 
+	proxyURL, err := url.Parse(reverseProxyURL)
+	if err != nil {
+		glog.Fatalf("web: invalid reverse proxy URL: %v", err)
+	}
+
+	reverseProxy := httputil.NewSingleHostReverseProxy(proxyURL)
+
 	e := echo.New()
 
 	useOS := len(os.Args) > 1 && os.Args[1] == "live"
 	assetHandler := http.FileServer(getFileSystem(useOS))
 
 	e.GET("/", echo.WrapHandler(assetHandler))
+
 	e.GET("/static/*", echo.WrapHandler(
 		http.StripPrefix("/static/", assetHandler),
 	))
 
-	e.GET("/reverse-proxy-url", func(c *echo.Context) error {
-		return c.JSON(http.StatusOK, UrlModel{
-			Url: reverseProxyURL,
-		})
-	})
+	// Browser -> Web :8888 -> Envoy :5555 -> Proxy
+	e.Any("/v1/*", echo.WrapHandler(reverseProxy))
 
 	if err := e.Start(fmt.Sprintf(":%v", webPort)); err != nil &&
 		!errors.Is(err, http.ErrServerClosed) {

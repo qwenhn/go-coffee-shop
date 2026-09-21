@@ -61,7 +61,8 @@ CONN_STRING := postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOS
 	docker-compose-core docker-compose-core-start docker-compose-core-stop \
 	migrate-create migrate-up migrate-down migrate-down-n \
 	migrate-force migrate-goto migrate-drop \
-	check-env clean
+	check-env clean \
+	dev-nomad dev-nomad-down dev-nomad-reset dev-nomad-verify dev-nomad-app
 
 
 # ============================================================
@@ -390,3 +391,23 @@ clean:
 	rm -rf $(KITCHEN_DIR)/bin
 	rm -rf $(PROXY_DIR)/bin
 	$(GO) clean
+
+.PHONY: dev-nomad
+dev-nomad:
+	bash ./scripts/dev/up.sh
+
+.PHONY: dev-nomad-down
+dev-nomad-down:
+	bash ./scripts/dev/down.sh
+
+.PHONY: dev-nomad-reset
+dev-nomad-reset:
+	bash ./scripts/dev/reset.sh
+
+.PHONY: dev-nomad-verify
+dev-nomad-verify:
+	bash ./scripts/dev/verify.sh
+
+.PHONY: dev-nomad-app
+dev-nomad-app:
+	bash ./scripts/dev/deploy-nomad-app.sh

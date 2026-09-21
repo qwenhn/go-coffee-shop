@@ -15,6 +15,40 @@ This project is **not an exact copy** of the original. It includes some updates,
 - **golang-migrate** — Database migrations
 - **Buf** — Protobuf management and code generation
 
+## Run with Nomad
+
+### Requirements
+
+- Docker
+- Docker Compose
+- Nomad
+- Consul
+- Vault
+- Terraform
+- jq
+- curl
+
+### Start
+
+```bash
+make dev-nomad
+```
+
+To deploy the application through Nomad and open the web UI:
+
+```bash
+make dev-nomad-reset
+make dev-nomad
+make dev-nomad-app
+```
+
+```bash
+make dev-nomad
+SKIP_BUILD=1 make dev-nomad-app
+```
+
+Then open http://localhost:8888.
+
 ## Note
 
 This project is mainly created for learning, experimentation, and building a reusable reference architecture for future Go projects.

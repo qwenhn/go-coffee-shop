@@ -96,3 +96,14 @@ docker-compose.override.yml
 
 *.bak
 *.tmp
+
+# =========================
+# scripts
+# =========================
+.local-vault-init.json
+.local-nomad/**
+
+# Terraform local state and provider cache
+deploy/terraform/.terraform/
+deploy/terraform/terraform.tfstate*
+deploy/terraform/*.tfvars

@@ -1,6 +1,5 @@
 function initApp() {
   const app = {
-    url: 'http://localhost:5001',
     time: null,
     activeMenu: 'pos',
     moneys: [2000, 5000, 10000, 20000, 50000, 100000],
@@ -16,14 +15,11 @@ function initApp() {
     receiptNo: null,
     receiptDate: null,
     async loadApp() {
-      const response = await fetch("/reverse-proxy-url")
-      const data = await response.json();
-      this.url = data.url;
-
-      this.loadProducts()
+      await this.loadProducts();
     },
+
     async loadProducts() {
-      const response = await fetch(`${this.url}/v1/api/item-types`)
+      const response = await fetch("/v1/api/item-types")
       const data = await response.json();
       this.itemTypes = data.itemTypes;
       console.log("itemTypes loaded", this.itemTypes);
@@ -31,13 +27,13 @@ function initApp() {
     async loadOrders() {
       this.orders = [];
       this.lineItems = [];
-      const response = await fetch(`${this.url}/v1/api/fulfillment-orders`)
+      const response = await fetch(`/v1/api/fulfillment-orders`)
       const data = await response.json();
       this.orders = data.orders;
       console.log("orders loaded", this.orders);
     },
     async createOrder(order) {
-      const response = await fetch(`${this.url}/v1/api/orders`, {
+      const response = await fetch(`/v1/api/orders`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
